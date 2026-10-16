@@ -40,7 +40,7 @@
    da coluna "sub".
    ============================================================ */
 const CONFIG = {
-  SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQ6wzk18wmuDfq2oG5P9vTpBcNQTENWnATpXXiQtU6k_TqPfsiG_At5BOjF0zZxfOQDXHCclyn3O_y/pub?output=csv",
+  SHEET_CSV_URL: "",
   TRAVEL_TIME_FUNCTION_URL: "/api/travel-time"
 };
 
@@ -69,8 +69,14 @@ const TRIP_FALLBACK = {
         }
       ],
       "reminders": [
-        "Reserva LATAM nº 243621359300 • Código de check-in web: LA9574893TBBT • Chegar ao aeroporto 3h antes do voo",
-        "Seguro viagem GTA/IZA contratado - Voucher 10817556 • Vigência 19/10 a 05/11/2026 • WhatsApp 24h: +1 305 404 2167 • Europa: +34 91 946 4416"
+        {
+          "text": "Reserva LATAM nº 243621359300 • Código de check-in web: LA9574893TBBT • Chegar ao aeroporto 3h antes do voo",
+          "link": ""
+        },
+        {
+          "text": "Seguro viagem GTA/IZA contratado - Voucher 10817556 • Vigência 19/10 a 05/11/2026 • WhatsApp 24h: +1 305 404 2167 • Europa: +34 91 946 4416",
+          "link": "http://www.vouchergta.me/12244088MAR"
+        }
       ]
     },
     {
