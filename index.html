@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roteiro - Cuca Pimentel</title>
+<meta name="theme-color" content="#0F2231">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Roteiro">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DADOS DA VIAGEM — edite tudo aqui para cada cliente.
+   Não precisa mexer em nada abaixo de "FIM DOS DADOS".
+   ============================================================ */
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="sparkles" aria-hidden="true"></div>
+
+<script>
+/* ============================================================
+   0. CONFIGURAÇÃO
+   ============================================================
+   SHEET_CSV_URL: cole aqui o link "Publicar na web" (formato CSV)
+   da planilha do Google Sheets com o roteiro. Deixe "" para usar
+   os dados de exemplo abaixo (TRIP_FALLBACK). Veja LEIA-ME.md.
+
+   TRAVEL_TIME_FUNCTION_URL: opcional — URL da função serverless
+   (netlify/functions/travel-time.js) que calcula o tempo real de
+   deslocamento via Google Maps. Deixe "" para usar o texto fixo
+   da coluna "sub".
+   ============================================================ */
+const CONFIG = {
+  SHEET_CSV_URL: "",
+  TRAVEL_TIME_FUNCTION_URL: "/api/travel-time"
+};
+
+/* ============================================================
+   1. DADOS DE EXEMPLO (usados só se SHEET_CSV_URL estiver vazio)
+   Tipos de item aceitos: flight, hotel, ticket, transit, activity
+   ============================================================ */
+const TRIP_FALLBACK = {
+  "clientName": "Cuca Pimentel",
+  "title": "ADE Amsterdã · Glasgow",
+  "dateRange": "19 de outubro a 5 de novembro de 2026",
+  "days": [
+    {
+      "label": "Dia 1",
+      "date": "Segunda-feira 19/10",
+      "theme": "Embarque rumo à Europa",
+      "items": [
+        {
+          "type": "flight",
+          "time": "18:00",
+          "title": "Voo LATAM 8078 - GRU → AMS",
+          "sub": "Classe Executiva Premium • Duração 12h • Chegada em Amsterdã 20/10 às 11:00 (horário local) • Bagagem: mochila/bolsa + bagagem de mão + 1 mala despachada (23kg)",
+          "origin": "GRU",
+          "destination": "AMS",
+          "link": "https://www.flightaware.com/live/flight/LAN8078"
+        }
+      ],
+      "reminders": [
+        "Reserva LATAM nº 243621359300 • Código de check-in web: LA9574893TBBT • Chegar ao aeroporto 3h antes do voo",
+        "Seguro viagem GTA/IZA contratado - Voucher 10817556 • Vigência 19/10 a 05/11/2026 • WhatsApp 24h: +1 305 404 2167 • Europa: +34 91 946 4416"
+      ]
+    },
+    {
+      "label": "Dia 2",
+      "date": "Terça-feira 20/10",
+      "theme": "Chegada em Amsterdã",
+      "items": [
+        {
+          "type": "hotel",
+          "time": "15:00",
+          "title": "Check-in · ibis Amsterdam Centre",
+          "sub": "Reserva nº QLDPFCXB • Stationsplein 49, 1012 AB Amsterdã • 2 adultos • 1 quarto • 6 noites (até 26/10) • Tel. +31 20 721 9172"
+        },
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Chegada em Amsterdã",
+          "sub": "Descanso após a viagem e preparação para o ADE (Amsterdam Dance Event)"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 3",
+      "date": "Quarta-feira 21/10",
+      "theme": "Amsterdam Dance Event (ADE)",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia de ADE em Amsterdã",
+          "sub": "Nenhum evento/ingresso cadastrado ainda - edite a planilha para incluir os shows e festas do ADE"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 4",
+      "date": "Quinta-feira 22/10",
+      "theme": "Amsterdam Dance Event (ADE)",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia de ADE em Amsterdã",
+          "sub": "Nenhum evento/ingresso cadastrado ainda - edite a planilha para incluir os shows e festas do ADE"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 5",
+      "date": "Sexta-feira 23/10",
+      "theme": "Amsterdam Dance Event (ADE)",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia de ADE em Amsterdã",
+          "sub": "Nenhum evento/ingresso cadastrado ainda - edite a planilha para incluir os shows e festas do ADE"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 6",
+      "date": "Sábado 24/10",
+      "theme": "Amsterdam Dance Event (ADE)",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia de ADE em Amsterdã",
+          "sub": "Nenhum evento/ingresso cadastrado ainda - edite a planilha para incluir os shows e festas do ADE"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 7",
+      "date": "Domingo 25/10",
+      "theme": "Amsterdam Dance Event (ADE)",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Último dia de ADE em Amsterdã",
+          "sub": "Organizar bagagem para a viagem a Glasgow no dia seguinte"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 8",
+      "date": "Segunda-feira 26/10",
+      "theme": "Viagem para Glasgow",
+      "items": [
+        {
+          "type": "hotel",
+          "time": "12:00",
+          "title": "Check-out · ibis Amsterdam Centre",
+          "sub": "Encerramento da primeira estadia em Amsterdã (reserva QLDPFCXB)"
+        },
+        {
+          "type": "transit",
+          "time": "",
+          "title": "Deslocamento Amsterdã → Glasgow",
+          "sub": "Nenhum voo/transporte cadastrado ainda - edite a planilha para incluir os dados do trecho Amsterdã-Glasgow",
+          "origin": "AMS",
+          "destination": "Glasgow"
+        },
+        {
+          "type": "hotel",
+          "time": "15:00",
+          "title": "Check-in · Novotel Glasgow Centre",
+          "sub": "Reserva nº QSMLDKZV • 181 Pitt Street, G2 4DT Glasgow • até 02/11 • Tel. +44 141 619 9001"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 9",
+      "date": "Terça-feira 27/10",
+      "theme": "Dias livres em Glasgow",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia livre em Glasgow",
+          "sub": "Nenhum passeio cadastrado ainda - edite a planilha para incluir as atividades do dia"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 10",
+      "date": "Quarta-feira 28/10",
+      "theme": "Dias livres em Glasgow",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia livre em Glasgow",
+          "sub": "Nenhum passeio cadastrado ainda - edite a planilha para incluir as atividades do dia"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 11",
+      "date": "Quinta-feira 29/10",
+      "theme": "Dias livres em Glasgow",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia livre em Glasgow",
+          "sub": "Nenhum passeio cadastrado ainda - edite a planilha para incluir as atividades do dia"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 12",
+      "date": "Sexta-feira 30/10",
+      "theme": "Dias livres em Glasgow",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia livre em Glasgow",
+          "sub": "Nenhum passeio cadastrado ainda - edite a planilha para incluir as atividades do dia"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 13",
+      "date": "Sábado 31/10",
+      "theme": "Dias livres em Glasgow",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia livre em Glasgow",
+          "sub": "Nenhum passeio cadastrado ainda - edite a planilha para incluir as atividades do dia"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 14",
+      "date": "Domingo 01/11",
+      "theme": "Dias livres em Glasgow",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Último dia em Glasgow",
+          "sub": "Organizar bagagem para o retorno a Amsterdã no dia seguinte"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 15",
+      "date": "Segunda-feira 02/11",
+      "theme": "Retorno a Amsterdã",
+      "items": [
+        {
+          "type": "hotel",
+          "time": "12:00",
+          "title": "Check-out · Novotel Glasgow Centre",
+          "sub": "Encerramento da estadia em Glasgow (reserva QSMLDKZV)"
+        },
+        {
+          "type": "transit",
+          "time": "",
+          "title": "Deslocamento Glasgow → Amsterdã",
+          "sub": "Nenhum voo/transporte cadastrado ainda - edite a planilha para incluir os dados do trecho Glasgow-Amsterdã",
+          "origin": "Glasgow",
+          "destination": "AMS"
+        },
+        {
+          "type": "hotel",
+          "time": "15:00",
+          "title": "Check-in · ibis Amsterdam Centre",
+          "sub": "Reserva nº QSMPDTCG • Stationsplein 49, 1012 AB Amsterdã • até 04/11 • Tel. +31 20 721 9172"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 16",
+      "date": "Terça-feira 03/11",
+      "theme": "Dias livres em Amsterdã",
+      "items": [
+        {
+          "type": "activity",
+          "time": "",
+          "title": "Dia livre em Amsterdã",
+          "sub": "Nenhum passeio cadastrado ainda - edite a planilha para incluir as atividades do dia"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 17",
+      "date": "Quarta-feira 04/11",
+      "theme": "Retorno ao Brasil",
+      "items": [
+        {
+          "type": "hotel",
+          "time": "12:00",
+          "title": "Check-out · ibis Amsterdam Centre",
+          "sub": "Encerramento da segunda estadia em Amsterdã (reserva QSMPDTCG)"
+        },
+        {
+          "type": "flight",
+          "time": "20:35",
+          "title": "Voo LATAM 8079 - AMS → GRU",
+          "sub": "Classe Executiva Premium • Duração 12h10 • Chegada em São Paulo 05/11 às 04:45 (horário local) • Bagagem: mochila/bolsa + bagagem de mão + 1 mala despachada (23kg)",
+          "origin": "AMS",
+          "destination": "GRU",
+          "link": "https://www.flightaware.com/live/flight/LAN8079"
+        }
+      ],
+      "reminders": []
+    },
+    {
+      "label": "Dia 18",
+      "date": "Quinta-feira 05/11",
+      "theme": "Chegada ao Brasil",
+      "items": [
+        {
+          "type": "activity",
+          "time": "04:45",
+          "title": "Chegada em São Paulo (GRU)",
+          "sub": "Fim da viagem - desembarque e retirada de bagagem"
+        }
+      ],
+      "reminders": []
+    }
+  ]
+};
+/* ================= FIM DOS DADOS ================= */
+
+const ICONS = {
+  flight: "✈️",
+  hotel: "🛏️",
+  ticket: "🎟️",
+  transit: "🚌",
+  activity: "📍"
+};
+const LABELS = {
+  flight: "voo",
+  hotel: "hospedagem",
+  ticket: "ingresso",
+  transit: "deslocamento",
+  activity: "atividade"
+};
+
+let activeDay = 0;
+let TRIP = TRIP_FALLBACK;
+
+/* ============================================================
+   2. CARREGAR DADOS DA PLANILHA (se configurada)
+   Espera colunas: day_label, day_date, day_theme, type, time,
+   title, sub, origin, destination
+   Uma linha com type "reminder" vira um lembrete do dia (usa
+   só a coluna "title" para o texto).
+   ============================================================ */
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(field); field = "";
+        if (row.some(v => v.trim() !== "")) rows.push(row);
+        row = [];
+      } else field += c;
+    }
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  const headers = rows.shift().map(h => h.trim());
+  return rows.map(r => Object.fromEntries(headers.map((h, i) => [h, (r[i] || "").trim()])));
+}
+
+function buildTripFromRows(rows) {
+  const days = [];
+  const byLabel = new Map();
+  for (const r of rows) {
+    if (!r.day_label) continue;
+    let day = byLabel.get(r.day_label);
+    if (!day) {
+      day = { label: r.day_label, date: r.day_date, theme: r.day_theme, items: [], reminders: [] };
+      byLabel.set(r.day_label, day);
+      days.push(day);
+    }
+    if (r.type === "reminder") {
+      if (r.title) day.reminders.push({ text: r.title, link: r.link || "" });
+    } else if (r.type) {
+      day.items.push({ type: r.type, time: r.time || "", title: r.title || "", sub: r.sub || "", origin: r.origin || "", destination: r.destination || "", link: r.link || "", link2: r.link2 || "", link2Label: r.link2_label || "Link" });
+    }
+  }
+  return {
+    clientName: rows[0]?.client_name || TRIP_FALLBACK.clientName,
+    title: TRIP_FALLBACK.title,
+    dateRange: days.length ? `${days[0].date} a ${days[days.length - 1].date}` : TRIP_FALLBACK.dateRange,
+    days
+  };
+}
+
+async function loadTrip() {
+  if (!CONFIG.SHEET_CSV_URL) return TRIP_FALLBACK;
+  try {
+    const res = await fetch(CONFIG.SHEET_CSV_URL);
+    if (!res.ok) throw new Error("Falha ao buscar planilha");
+    const rows = parseCsv(await res.text());
+    return buildTripFromRows(rows);
+  } catch (err) {
+    console.error("Não foi possível carregar a planilha, usando dados de exemplo.", err);
+    return TRIP_FALLBACK;
+  }
+}
+
+/* ============================================================
+   3. TEMPO DE DESLOCAMENTO (opcional)
+   Se TRAVEL_TIME_FUNCTION_URL estiver configurada, busca o tempo
+   real via Google Maps para itens do tipo "transit" que tenham
+   origin/destination preenchidos na planilha.
+   ============================================================ */
+async function enrichTravelTimes(trip) {
+  if (!CONFIG.TRAVEL_TIME_FUNCTION_URL) return trip;
+  for (const day of trip.days) {
+    for (const it of day.items) {
+      if (it.type === "transit" && it.origin && it.destination) {
+        try {
+          const url = `${CONFIG.TRAVEL_TIME_FUNCTION_URL}?origin=${encodeURIComponent(it.origin)}&destination=${encodeURIComponent(it.destination)}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.durationText) it.sub = `${it.sub ? it.sub + " · " : ""}${data.durationText} de trajeto agora`;
+        } catch (err) {
+          console.error("Não foi possível calcular o deslocamento", err);
+        }
+      }
+    }
+  }
+  return trip;
+}
+
+function itemRow(it) {
+  const titleHtml = it.link
+    ? `<a href="${it.link}" target="_blank" rel="noopener noreferrer" class="row-title row-title--link">${it.title} <span class="row-link-icon" aria-hidden="true">↗</span></a>`
+    : `<p class="row-title">${it.title}</p>`;
+  const link2Html = it.link2
+    ? `<a href="${it.link2}" target="_blank" rel="noopener noreferrer" class="row-link2">${it.link2Label} <span class="row-link-icon" aria-hidden="true">↗</span></a>`
+    : "";
+  return `
+    <div class="row">
+      <div class="row-time">${it.time}</div>
+      <div class="row-icon row-icon--${it.type}" aria-hidden="true">${ICONS[it.type] || "•"}</div>
+      <div class="row-body">
+        <div class="row-top">
+          ${titleHtml}
+          <span class="row-tag">${LABELS[it.type]}</span>
+        </div>
+        <p class="row-sub">${it.sub}</p>
+        ${link2Html}
+      </div>
+    </div>`;
+}
+
+function reminderRow(reminder) {
+  const textHtml = reminder.link
+    ? `<a href="${reminder.link}" target="_blank" rel="noopener noreferrer" class="reminder-link">${reminder.text} <span class="row-link-icon" aria-hidden="true">↗</span></a>`
+    : reminder.text;
+  return `
+    <div class="reminder">
+      <span aria-hidden="true">🔔</span>
+      <p>${textHtml}</p>
+    </div>`;
+}
+
+function isUniversalDay(day) {
+  const text = [day.theme, ...day.items.map(it => `${it.title} ${it.sub} ${it.origin} ${it.destination}`)].join(" ").toLowerCase();
+  return text.includes("universal");
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const tabs = TRIP.days.map((d, i) => `
+    <button class="tab ${i === activeDay ? 'tab--active' : ''}" data-idx="${i}" aria-pressed="${i === activeDay}">
+      <span class="tab-label">${d.label}</span>
+      <span class="tab-theme">${d.theme}</span>
+    </button>`).join('');
+
+  const day = TRIP.days[activeDay];
+  document.body.classList.toggle('theme-universal', isUniversalDay(day));
+  const items = day.items.map(itemRow).join('');
+  const reminders = day.reminders.map(reminderRow).join('');
+
+  app.innerHTML = `
+    <header class="header">
+      <p class="eyebrow">${TRIP.title}</p>
+      <h1>${TRIP.clientName}</h1>
+      <p class="dates">${TRIP.dateRange}</p>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Dias da viagem">${tabs}</nav>
+
+    <main class="card">
+      <div class="card-head">
+        <div>
+          <p class="card-theme">${day.theme}</p>
+          <p class="card-date">${day.date}</p>
+        </div>
+        <div class="stub">${day.label}</div>
+      </div>
+      <div class="timeline">${items}</div>
+      <div class="reminders">
+        <p class="reminders-title">🔔 Lembretes de hoje</p>
+        ${reminders}
+      </div>
+    </main>
+  `;
+
+  app.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeDay = parseInt(btn.dataset.idx, 10);
+      render();
+    });
+  });
+}
+
+(async function init() {
+  document.getElementById('app').innerHTML = '<p style="color:#9FB3C4;font-family:Inter,sans-serif;padding:32px 20px">Carregando roteiro…</p>';
+  TRIP = await loadTrip();
+  TRIP = await enrichTravelTimes(TRIP);
+  render();
+})();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((err) => console.error("Service worker falhou", err));
+  });
+}
+</script>
+
+<style>
+  :root {
+    --ink: #1E1033;
+    --panel: #2B1852;
+    --panel-2: #371F68;
+    --amber: #F2599C;
+    --amber-dark: #7A1145;
+    --coral: #FF7BAC;
+    --teal: #B18AFF;
+    --cream: #F5EEFF;
+    --muted: #C3AEE8;
+    --hair: rgba(245,238,255,0.14);
+  }
+  body.theme-universal {
+    --ink: #071B33;
+    --panel: #0B2A4A;
+    --panel-2: #103A63;
+    --amber: #22D3EE;
+    --amber-dark: #063846;
+    --coral: #38BDF8;
+    --teal: #7DD3FC;
+    --cream: #EAF8FF;
+    --muted: #9FC9E0;
+    --hair: rgba(234,248,255,0.14);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sparkles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 8% 12%, rgba(245,238,255,0.9), transparent),
+      radial-gradient(1px 1px at 22% 28%, rgba(245,238,255,0.7), transparent),
+      radial-gradient(2px 2px at 35% 8%, rgba(245,238,255,0.8), transparent),
+      radial-gradient(1px 1px at 48% 35%, rgba(245,238,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 62% 15%, rgba(245,238,255,0.85), transparent),
+      radial-gradient(1px 1px at 75% 30%, rgba(245,238,255,0.6), transparent),
+      radial-gradient(2px 2px at 88% 10%, rgba(245,238,255,0.9), transparent),
+      radial-gradient(1px 1px at 14% 55%, rgba(245,238,255,0.55), transparent),
+      radial-gradient(1.5px 1.5px at 30% 68%, rgba(245,238,255,0.75), transparent),
+      radial-gradient(1px 1px at 45% 82%, rgba(245,238,255,0.5), transparent),
+      radial-gradient(2px 2px at 58% 60%, rgba(245,238,255,0.85), transparent),
+      radial-gradient(1px 1px at 70% 75%, rgba(245,238,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 82% 55%, rgba(245,238,255,0.8), transparent),
+      radial-gradient(1px 1px at 95% 68%, rgba(245,238,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 5% 88%, rgba(245,238,255,0.7), transparent),
+      radial-gradient(1px 1px at 20% 95%, rgba(245,238,255,0.55), transparent),
+      radial-gradient(2px 2px at 40% 92%, rgba(245,238,255,0.8), transparent),
+      radial-gradient(1px 1px at 65% 90%, rgba(245,238,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 90% 88%, rgba(245,238,255,0.75), transparent);
+    background-repeat: no-repeat;
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.5; }
+    to { opacity: 1; }
+  }
+  #app { position: relative; z-index: 1; }
+  #app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+  .header { margin-bottom: 24px; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 6px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    line-height: 1.15;
+  }
+  .dates {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 20px;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    min-width: 96px;
+    text-align: left;
+    background: var(--panel);
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--cream);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .tab:hover { border-color: rgba(242,169,59,0.5); }
+  .tab--active {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+  .tab--active .tab-theme, .tab--active .tab-label { color: var(--amber-dark); }
+  .tab-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tab-theme {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--hair);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 22px;
+    background: var(--panel-2);
+    border-bottom: 1px dashed var(--hair);
+  }
+  .card-theme {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .card-date {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .stub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--amber);
+    border: 1px solid rgba(242,169,59,0.4);
+    border-radius: 999px;
+    padding: 6px 14px;
+  }
+  .timeline { padding: 8px 22px; }
+  .row {
+    display: flex;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--hair);
+  }
+  .row:last-child { border-bottom: none; }
+  .row-time {
+    width: 54px;
+    flex-shrink: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--amber);
+    padding-top: 6px;
+  }
+  .row-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background: rgba(244,239,227,0.08);
+    color: var(--cream);
+  }
+  .row-icon--flight { background: rgba(177,138,255,0.22); color: var(--teal); }
+  .row-icon--hotel { background: rgba(255,123,172,0.22); color: var(--coral); }
+  .row-icon--ticket { background: rgba(242,89,156,0.22); color: var(--amber); }
+  .row-icon--transit { background: rgba(245,238,255,0.1); color: var(--muted); }
+  .row-icon--activity { background: rgba(177,138,255,0.22); color: var(--teal); }
+  .row-body { flex: 1; min-width: 0; }
+  .row-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .row-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .row-title--link {
+    color: var(--cream);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--amber);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .row-title--link:hover { color: var(--amber); }
+  .row-link-icon { font-size: 12px; color: var(--amber); }
+  .row-link2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--amber);
+    text-decoration: none;
+    border: 1px solid rgba(242,89,156,0.4);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+  .row-link2:hover { background: rgba(242,89,156,0.12); }
+  .row-tag {
+    flex-shrink: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .row-sub {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .reminders {
+    background: rgba(0,0,0,0.18);
+    padding: 18px 22px 22px;
+  }
+  .reminders-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .reminder {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 6px 0;
+  }
+  .reminder i {
+    font-size: 15px;
+    color: var(--amber);
+    margin-top: 2px;
+  }
+  .reminder p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .reminder-link {
+    color: var(--amber);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--amber);
+  }
+  .reminder-link:hover { color: var(--coral); }
+  @media (max-width: 420px) {
+    h1 { font-size: 25px; }
+    .card-head { padding: 16px 18px; }
+    .timeline { padding: 4px 18px; }
+    .reminders { padding: 14px 18px 18px; }
+  }
+</style>
+</body>
+</html>
